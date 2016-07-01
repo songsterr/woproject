@@ -17,3 +17,8 @@ build:
     environment:
       - DOCKER_HOST=unix:///var/run/host.sock
       - REPO=722983754809.dkr.ecr.us-east-1.amazonaws.com/woproject
+
+cache:
+  mount:
+    - docker/image.tar
+    - node_modules
