@@ -21,4 +21,3 @@ build:
 cache:
   mount:
     - docker/image.tar
-    - node_modules
