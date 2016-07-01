@@ -3,7 +3,7 @@ clone:
 
 build:
   publish:
-    image: songsterr/builderr:1.0.2
+    image: songsterr/builderr:1.0.1
     commands:
       - $(aws ecr get-login --region us-east-1) # aws credentials are managed through IAM role which is bound to drone host
       - docker load -i docker/image.tar
