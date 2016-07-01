@@ -10,6 +10,7 @@ build:
       - docker build --rm=true -f Dockerfile -t $REPO:$$BRANCH .
       - docker tag $REPO:$$BRANCH $REPO:$$COMMIT
       - docker push $REPO:$$BRANCH
+      - docker push $REPO:$$COMMIT
       - docker save -o docker_cache.tar $REPO:$$COMMIT
     volumes:
       - /var/run/docker.sock:/var/run/host.sock:ro
