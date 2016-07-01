@@ -1,3 +1,6 @@
+clone:
+  recursive: true
+
 build:
   publish:
     image: songsterr/builderr:1.0.2
