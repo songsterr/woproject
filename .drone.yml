@@ -1,0 +1,19 @@
+clone:
+  recursive: true
+  submodule_update_remote: true
+
+publish:
+  image: songsterr/builderr:1.0.2
+  commands:
+    - $(aws ecr get-login --region us-east-1) # aws credentials are managed through IAM role which is bound to drone host
+    - docker load -i docker/image.tar
+    - docker build --rm=true -f Dockerfile -t $REPO:$$BRANCH .
+    - docker tag $REPO:$$BRANCH $REPO:$$COMMIT
+    - docker push $REPO:$$BRANCH
+    - docker push $REPO:$$COMMIT
+    - docker save -o docker/image.tar $REPO:$$COMMIT
+  volumes:
+    - /var/run/docker.sock:/var/run/host.sock:ro
+  environment:
+    - DOCKER_HOST=unix:///var/run/host.sock
+    - REPO=722983754809.dkr.ecr.us-east-1.amazonaws.com/woproject
