@@ -6,11 +6,11 @@ build:
     image: songsterr/builderr:1.0.1
     commands:
       - $(aws ecr get-login --region us-east-1) # aws credentials are managed through IAM role which is bound to drone host
-      - docker load -i docker/image.tar || true
+      - docker load -i docker_cache.tar || true
       - docker build --rm=true -f Dockerfile -t $REPO:$$BRANCH .
       - docker tag $REPO:$$BRANCH $REPO:$$COMMIT
       - docker push $REPO:$$BRANCH
-      - docker save -o docker/image.tar $REPO:$$COMMIT
+      - docker save -o docker_cache.tar $REPO:$$COMMIT
     volumes:
       - /var/run/docker.sock:/var/run/host.sock:ro
     environment:
@@ -26,4 +26,4 @@ notify:
 
 cache:
   mount:
-    - docker/image.tar
+    - docker_cache.tar
