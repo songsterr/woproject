@@ -10,13 +10,19 @@ build:
       - docker build --rm=true -f Dockerfile -t $REPO:$$BRANCH .
       - docker tag $REPO:$$BRANCH $REPO:$$COMMIT
       - docker push $REPO:$$BRANCH
-      - docker push $REPO:$$COMMIT
       - docker save -o docker/image.tar $REPO:$$COMMIT
     volumes:
       - /var/run/docker.sock:/var/run/host.sock:ro
     environment:
       - DOCKER_HOST=unix:///var/run/host.sock
       - REPO=722983754809.dkr.ecr.us-east-1.amazonaws.com/woproject
+
+notify:
+  slack:
+    webhook_url: $$slack_webhook
+    channel: tech
+    template: |
+      Build <{{system.link_url}}/{{repo.full_name}}/{{build.number}}|#{{build.number}}> (<{{build.link_url}}|{{ truncate build.commit 8 }}>) of {{repo.name}}@{{ build.branch}} by {{ build.author }} {{#success build.status}}passed{{else}}failed {{/success}} in {{ duration build.started_at build.finished_at }}
 
 cache:
   mount:
