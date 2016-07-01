@@ -1,0 +1,7 @@
+[submodule "WOJenkins"]
+	path = WOJenkins
+	url = https://github.com/songsterr/WOJenkins.git
+[submodule "wonder"]
+	path = wonder
+    url = https://github.com/wocommunity/wonder.git
+    ignore=dirty
