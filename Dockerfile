@@ -1,8 +1,19 @@
-FROM nmaas87/webratio-ant
+FROM anapsix/alpine-java:jdk8
 MAINTAINER Aleksey Potapkin <apotapkin@demax.ru>
 
-RUN apt-get update &&\
-   apt-get install -y curl
+RUN apk add --no-cache curl docker python py-pip git && \
+  pip install awscli && \
+  apk del py-pip
+
+# Installs Ant
+ENV ANT_VERSION 1.9.7
+RUN cd && \
+    wget -q http://www.us.apache.org/dist/ant/binaries/apache-ant-${ANT_VERSION}-bin.tar.gz && \
+    tar -xzf apache-ant-${ANT_VERSION}-bin.tar.gz && \
+    mv apache-ant-${ANT_VERSION} /opt/ant && \
+    rm apache-ant-${ANT_VERSION}-bin.tar.gz
+ENV ANT_HOME /opt/ant
+ENV PATH ${PATH}:/opt/ant/bin
 
 WORKDIR /drone
 
@@ -19,5 +30,7 @@ RUN ant frameworks frameworks.install \
 	-propertyfile /Root/build.properties \
 	-Dant.build.javac.target=1.7 \
 	-buildfile /drone/Wonder/build.xml
+
+RUN apk del curl
 
 
