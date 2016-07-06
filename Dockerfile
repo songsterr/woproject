@@ -19,6 +19,10 @@ COPY ./wonder/ /wonder
 ENV WO_VERSION 5.4.3
 ENV WONDER_BRANCH master
 
+COPY WOInstaller.jar /WOFrameworksRepository/WebObjects/
+# Ant tasks jar 
+COPY woproject.jar /WOFrameworksRepository/WOProject/
+
 RUN bash -x /WOJenkins/Install/WebObjects/installWebObjects.sh && \
 bash -x /WOJenkins/Build/Wonder/WorkspaceSetupScripts/Git/setupWonderWorkspace.sh
 
@@ -29,4 +33,8 @@ RUN ant frameworks frameworks.install \
 
 RUN apk del curl
 
+COPY build-wocore.xml /root/Library/
+COPY wobuild.properties /root/Library/
+
+RUN ln -snf /Root/jenkins.build.properties /root/build.properties 
 

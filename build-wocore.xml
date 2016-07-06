@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:dm="http://www.example.com/xmlns/dm" name="wo-core" default="default">
+
+	<target name="default" depends="build" />
+
+	<target name="do-build" depends="setProps,init.build">
+		<antcall inheritrefs="true" target="build.${wo.project.type}" />
+	</target>
+
+	<target name="build" depends="setProps,compile,do-build" />
+
+	<target name="install" depends="setProps,init.install,build,junit" />
+
+	<target name="clean" depends="setProps">
+		<delete dir="bin" />
+		<delete dir="bintest" />
+		<delete dir="dist" />
+	</target>
+
+	<target name="junit" depends="setProps,build,build.fallback.unittests" unless="bypass.junit">
+		<taskdef name="wounit" classname="org.objectstyle.woproject.ant.WOUnit" />
+		<wounit fork="true" forkmode="once" reloading="false" printsummary="false" showoutput="true" failureproperty="test.failed">
+			<classpath id="test.classpath">
+				<path location="bin" />
+				<path location="bintest/unit" />
+				<pathelement path="${wo.dumpedClasspath}" />
+			</classpath>
+
+			<formatter type="brief" usefile="false" />
+			<formatter type="xml" usefile="true" />
+			<batchtest>
+				<fileset dir="bintest/unit">
+					<include name="**/*Test.class" />
+				</fileset>
+			</batchtest>
+		</wounit>
+		<junitreport tofile="junit_report.xml">
+			<fileset dir=".">
+				<include name="TEST-*.xml" />
+			</fileset>
+		</junitreport>
+		<fail message="Unit tests failed" if="test.failed" />
+	</target>
+	
+	<target name="tuneClasspath">
+		<path id="wo.explicitClasspath" />
+	</target>
+
+	<!-- property determination  -->
+	<target name="setProps" depends="tuneClasspath">
+		<property file="${user.home}${file.separator}build.properties" />
+		<property file="build.properties" />
+		<property file="${user.home}${file.separator}Library${file.separator}wobuild.properties" />
+		<property name="classes.dir" value="bin" />
+		<condition property="wo.properties.check.failed">
+			<not>
+				<or>
+					<!-- Using 'or' instead of 'end' to force wo.wolocalroot definition -->
+					<isset property="wo.wosystemroot" />
+					<isset property="wo.wolocalroot" />
+				</or>
+			</not>
+		</condition>
+		<fail message="Could not find ${user.home}${file.separator}Library${file.separator}wobuild.properties." if="wo.properties.check.failed" />
+
+		<condition property="wo.project.type" value="woframework">
+			<equals arg1="${project.type}" arg2="framework" />
+		</condition>
+		<condition property="wo.project.type" value="wogeneric">
+			<equals arg1="${project.type}" arg2="generic" />
+		</condition>
+		<condition property="wo.project.type" value="woapplication">
+			<or>
+				<equals arg1="${project.type}" arg2="application" />
+				<not>
+					<isset property="wo.project.type" />
+				</not>
+			</or>
+		</condition>
+		<antcall inheritrefs="true" target="setProps.${wo.project.type}" />
+	</target>
+
+	<target name="setProps.woframework">
+		<property name="install.dir" value="${wo.wolocalroot}/Library/Frameworks" />
+	</target>
+
+	<target name="setProps.woapplication">
+		<property name="install.dir" value="${wo.wolocalroot}/Library/WebObjects/Applications" />
+	</target>
+
+	<target name="setProps.wogeneric">
+		<property name="install.dir" value="${wo.wolocalroot}/Applications" />
+	</target>
+
+	<!-- basic initializations  -->
+	<target name="init.install">
+		<tstamp />
+		<property name="dest.dir" value="${install.dir}/dist" />
+		<property name="dest.wsdir" value="${install.dir}/dist_ws" />
+	</target>
+
+	<target name="init.build">
+		<tstamp />
+		<property name="dest.dir" value="dist" />
+		<property name="dest.wsdir" value="dist_ws" />
+		<property name="debug" value="true" />
+		<property name="debug.level" value="lines,source" />
+	</target>
+
+	<!-- woproject tasks -->
+	<target name="build.woapplication">
+
+		<taskdef name="woapplication" classname="org.objectstyle.woproject.ant.WOApplication">
+		</taskdef>
+
+		<property name="wo.explicitClasspathStr" refid="wo.explicitClasspath" />
+		<loadresource property="woapplication.manifest.classpath">
+		        <propertyresource name="wo.explicitClasspathStr" />
+			<filterChain>
+				<replaceString from=":" to=" " />
+			</filterChain>
+		</loadresource>
+		<manifest file="MANIFEST.MF">
+			<attribute name="Class-path" value="${woapplication.manifest.classpath}" />
+		</manifest>
+
+		<!-- add webXML="true" to generate a web.xml file -->
+		<woapplication name="${project.name}" wsDestDir="${dest.wsdir}" destDir="${dest.dir}" customInfoPListContent="${customInfoPListContent}" principalClass="${principalClass}" webXML="${webXML}" webXML_CustomContent="${webXML_CustomContent}" manifest="MANIFEST.MF">
+			<classes dir="${classes.dir}">
+				<include name="**/*.class" />
+				<exclude name=".svn" />
+				<exclude name=".CVS" />
+			</classes>
+			<lib dir="Libraries">
+				<include name="**/*.jar" />
+			</lib>
+			<resources dir="Components">
+				<include name="**.api" />
+				<include name="**/*.wo/**" />
+			</resources>
+			<resources dir="Resources">
+				<include name="**/*" />
+			</resources>
+			<wsresources dir="WebServerResources">
+				<include name="**/*" />
+			</wsresources>
+
+			<frameworks root="ProjectLocal" embed="${embed.ProjectLocal}" eclipse="true" />
+			<frameworks root="External" embed="${embed.External}" eclipse="true" />
+			<frameworks root="Local" embed="${embed.Local}" eclipse="true" />
+			<frameworks root="User" embed="${embed.User}" eclipse="true" />
+			<frameworks root="System" embed="${embed.System}" eclipse="true" />
+			<frameworks root="Network" embed="${embed.Network}" eclipse="true" />
+
+			<lib dir="Libraries">
+				<include name="*.jar" />
+				<exclude name="**/*.woa/**" />
+			</lib>
+		</woapplication>
+		<chmod file="${dest.dir}/${ant.project.name}.woa/${ant.project.name}" perm="ugo+rx" />
+	</target>
+
+	<!-- woproject tasks -->
+	<target name="build.woframework">
+
+		<taskdef name="woframework" classname="org.objectstyle.woproject.ant.WOFramework">
+		</taskdef>
+
+		<woframework name="${project.name}" wsDestDir="${dest.wsdir}" destDir="${dest.dir}" customInfoPListContent="${customInfoPListContent}" principalClass="${principalClass}" eoAdaptorClassName="${eoAdaptorClassName}">
+			<classes dir="${classes.dir}">
+				<include name="**/*.class" />
+				<exclude name=".svn" />
+				<exclude name=".CVS" />
+			</classes>
+			<classes dir="Sources">
+				<include name="**/*.zip" />
+			</classes>
+			<lib dir="Libraries">
+				<include name="**/*.jar" />
+			</lib>
+			<resources dir="Components">
+				<include name="**.api" />
+				<include name="**/*.wo/**" />
+			</resources>
+			<resources dir="Resources">
+				<include name="**/*" />
+			</resources>
+			<wsresources dir="WebServerResources">
+				<include name="**/*" />
+			</wsresources>
+
+			<lib dir="Libraries">
+				<include name="*.jar" />
+				<exclude name="**/*.framework/**" />
+			</lib>
+		</woframework>
+	</target>
+
+	<target name="build.wogeneric">
+		<loadresource property="wo.manifest.classpath">
+		        <propertyresource name="wo.dumpedClasspath" />
+			<filterChain>
+				<replaceString from=":" to=" " />
+			</filterChain>
+		</loadresource>
+		<mkdir dir="${dest.dir}" />
+
+		<taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="Libraries/jarjar-1.4.jar"/>
+
+		<jarjar destfile="${dest.dir}/${ant.project.name}-run.jar">
+			<fileset dir="${classes.dir}" />
+			<zipgroupfileset dir="../../Root">
+			  <include name = "**/*.jar" />
+			</zipgroupfileset>
+			<zipgroupfileset dir="Libraries" includes="**/*.jar" />
+			<manifest>
+				<attribute name="Main-Class" value="${principalClass}" />
+				<attribute name="Class-path" value="${wo.manifest.classpath}" />
+			</manifest>
+
+		</jarjar>
+		<jar destfile="${dest.dir}/${ant.project.name}.jar">
+			<fileset dir="${classes.dir}" />
+	                <manifest>
+		                <attribute name="Main-Class" value="${principalClass}" />
+		                <attribute name="Class-path" value="${wo.manifest.classpath}" />
+		        </manifest>
+		</jar>
+
+		<copy todir="${dest.dir}">
+			<fileset dir="." includes="Resources/**/*" />
+		</copy>
+	</target>
+
+	<target name="compile" depends="setProps,init.build">
+		<taskdef name="wocompile" classname="org.objectstyle.woproject.ant.WOCompile" />
+		<mkdir dir="bin" />
+		<mkdir dir="bintest/acceptance" />
+		<mkdir dir="bintest/integration" />
+		<mkdir dir="bintest/unit" />
+		<mkdir dir="Components" />
+		<mkdir dir="Libraries" />
+		<mkdir dir="Resources" />
+		<mkdir dir="WebServerResources" />
+		<wocompile srcdir="." includes="Sources/**/*.java" destdir="bin" debug="${debug}" debuglevel="${debug.level}" dumpClasspath="wo.dumpedClasspath">
+			<frameworks root="ProjectLocal" embed="${embed.ProjectLocal}" eclipse="true" />
+			<frameworks root="External" embed="${embed.External}" eclipse="true" />
+			<frameworks root="Local" embed="${embed.Local}" eclipse="true" />
+			<frameworks root="User" embed="${embed.User}" eclipse="true" />
+			<frameworks root="System" embed="${embed.System}" eclipse="true" />
+			<frameworks root="Network" embed="${embed.Network}" eclipse="true" />
+			<classpath>
+				<path refid="wo.explicitClasspath" />
+				<fileset dir="Libraries">
+					<include name="*.jar" />
+				</fileset>
+			</classpath>
+		</wocompile>
+
+		<condition property="project.newstyletests">
+			<or>
+				<available file="Tests/Acceptance" />
+				<available file="Tests/Integration" />
+				<available file="Tests/Unit" />
+			</or>
+		</condition>
+		<wocompile srcdir="." includes="Tests/Acceptance/**/*.java" destdir="bin" debug="${debug}" debuglevel="${debug.level}">
+			<classpath>
+				<pathelement path="bin:${wo.dumpedClasspath}" />
+			</classpath>
+		</wocompile>
+		<wocompile srcdir="." includes="Tests/Integration/**/*.java" destdir="bintest/integration" debug="${debug}" debuglevel="${debug.level}">
+			<classpath>
+				<pathelement path="bin:${wo.dumpedClasspath}" />
+			</classpath>
+		</wocompile>
+		<wocompile srcdir="." includes="Tests/Unit/**/*.java" destdir="bintest/unit" debug="${debug}" debuglevel="${debug.level}">
+			<classpath>
+				<pathelement path="bin:${wo.dumpedClasspath}" />
+			</classpath>
+		</wocompile>
+	</target>
+
+	<target name="build.fallback.unittests" depends="compile" unless="project.newstyletests">
+		<wocompile srcdir="." includes="Tests/**/*.java" destdir="bintest/unit" debug="${debug}" debuglevel="${debug.level}">
+			<classpath>
+				<pathelement path="bin:${wo.dumpedClasspath}" />
+			</classpath>
+		</wocompile>
+	</target>
+	
+	<path id="pmd.classpath">
+	    <fileset dir="${user.home}/Library/pmd/lib">
+	        <include name="*.jar"/>
+	    </fileset>
+	</path>	
+	
+	<target name="pmd">
+		<taskdef name="pmd" classname="net.sourceforge.pmd.ant.PMDTask" classpathref="pmd.classpath" />
+		
+		<pmd>
+			<ruleset>rulesets/basic.xml</ruleset>
+			<ruleset>rulesets/braces.xml</ruleset>
+			<ruleset>rulesets/codesize.xml</ruleset>
+			<ruleset>rulesets/clone.xml</ruleset>
+			<ruleset>rulesets/design.xml</ruleset>
+			<ruleset>rulesets/finalizers.xml</ruleset>
+			<ruleset>rulesets/imports.xml</ruleset>
+			<ruleset>rulesets/strictexception.xml</ruleset>
+			<ruleset>rulesets/strings.xml</ruleset>
+			<ruleset>rulesets/sunsecure.xml</ruleset>
+			<ruleset>rulesets/unusedcode.xml</ruleset>
+			
+	        <formatter type="xml" toFile="pmd_report.xml"/>
+	        <fileset dir="Sources">
+	            <include name="**/*.java"/>
+	        </fileset>
+	    </pmd>
+	</target>
+	
+	<target name="cpd">
+		<taskdef name="cpd" classname="net.sourceforge.pmd.cpd.CPDTask" classpathref="pmd.classpath" />
+		
+		<cpd encoding="utf-8" minimumTokenCount="75" outputFile="cpd_report.xml" format="xml">
+			<fileset dir="Sources">
+				<include name="**/*.java"/>
+			</fileset>
+		</cpd>		
+	</target>
+	
+	<property name="findbugs.home" value="${user.home}/Library/findbugs" />
+	<path id="findbugs.classpath">
+		<fileset dir="${findbugs.home}/lib">
+			<include name="*.jar"/>
+		</fileset>
+	</path>	
+	
+	<target name="findbugs">
+		<taskdef name="findbugs" classname="edu.umd.cs.findbugs.anttask.FindBugsTask" classpathref="findbugs.classpath" />
+		
+		<findbugs home="${findbugs.home}" output="xml" outputFile="findbugs_report.xml">
+			<sourcePath path="Sources" />
+			<class location="bin" />
+		</findbugs>		
+	</target>
+</project>
