@@ -13,9 +13,14 @@ publish:
     save:
       destination: docker/image.tar
       tag: latest
-    environment:
-      - DOCKER_LAUNCH_DEBUG=true
-
+notify:
+  slack:
+    webhook_url: $$slack_webhook
+    channel: tech
+    template: |
+      Build <{{system.link_url}}/{{repo.full_name}}/{{build.number}}|#{{build.number}}> (<{{build.link_url}}|{{ truncate build.commit 8 }}>) of {{repo.name}}@{{ build.branch}} by {{ build.author }} {{#success build.status}}passed{{else}}failed {{/success}} in {{ duration build.started_at build.finished_at }}
 cache:
   mount:
     - docker/image.tar
+# unencrypted variables from .drone.sec can be found in 1P
+# generate new .drone.sec with https://drone.terra.songsterr.com/songsterr/songsterr-processor-svg/settings/encrypt
