@@ -2,8 +2,9 @@ clone:
   recursive: true
 publish:
   docker:
+    username: songsterr
     password: $$dockerhub_password
-    email: hq+docker@songsterr.com
+    email: hq@songsterr.com
     repo: songsterr/woproject
     tag:
       - latest
