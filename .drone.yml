@@ -1,6 +1,7 @@
+clone:
+  recursive: true
 publish:
   docker:
-    username: hq+docker@songsterr.com
     password: $$dockerhub_password
     email: hq+docker@songsterr.com
     repo: songsterr/woproject
@@ -10,11 +11,11 @@ publish:
     load: docker/image.tar
     file: Dockerfile
     save:
-      destination: docker_cache.tar
+      destination: docker/image.tar
       tag: latest
     environment:
       - DOCKER_LAUNCH_DEBUG=true
 
 cache:
   mount:
-    - docker_cache.tar
+    - docker/image.tar
