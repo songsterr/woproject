@@ -1,20 +1,19 @@
-build:
-  publish:
-    docker:
-      username: hq+docker@songsterr.com
-      password: 7
-      email: hq+docker@songsterr.com
-      repo: songsterr/woproject
-      tag:
-        - latest
-        - $$COMMIT
-      load: docker/image.tar
-      file: Dockerfile
-      save:
-        destination: docker/image.tar
-        tag: latest
-      environment:
-        - DOCKER_LAUNCH_DEBUG=true
+publish:
+  docker:
+    username: hq+docker@songsterr.com
+    password: 7
+    email: hq+docker@songsterr.com
+    repo: songsterr/woproject
+    tag:
+      - latest
+      - $$COMMIT
+    load: docker/image.tar
+    file: Dockerfile
+    save:
+      destination: docker/image.tar
+      tag: latest
+    environment:
+      - DOCKER_LAUNCH_DEBUG=true
 
 cache:
   mount:
