@@ -12,7 +12,7 @@ publish:
     load: docker/image.tar
     file: Dockerfile
     save:
-      destination: docker/image.tar
+      destination: docker_cache.tar
       tag: latest
 notify:
   slack:
@@ -31,6 +31,6 @@ notify:
 
 cache:
   mount:
-    - docker/image.tar
+    - docker_cache.tar
 # unencrypted variables from .drone.sec can be found in 1P
 # generate new .drone.sec with https://drone.terra.songsterr.com/songsterr/songsterr-processor-svg/settings/encrypt
