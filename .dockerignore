@@ -1,2 +1,3 @@
 .git
+docker/image.tar
 docker_cache.tar
