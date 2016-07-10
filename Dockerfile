@@ -38,3 +38,4 @@ COPY wobuild.properties /root/Library/
 
 RUN ln -snf /Root/jenkins.build.properties /root/build.properties 
 
+RUN mkdir /Projects
