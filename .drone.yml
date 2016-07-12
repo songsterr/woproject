@@ -9,6 +9,7 @@ publish:
     tag:
       - latest
       - $$COMMIT
+      - "1.0.1"
     load: docker/image.tar
     file: Dockerfile
     save:
@@ -20,15 +21,6 @@ notify:
     channel: tech
     template: |
       Build <{{system.link_url}}/{{repo.full_name}}/{{build.number}}|#{{build.number}}> (<{{build.link_url}}|{{ truncate build.commit 8 }}>) of {{repo.name}}@{{ build.branch}} by {{ build.author }} {{#success build.status}}passed{{else}}failed {{/success}} in {{ duration build.started_at build.finished_at }}
-  downstream:
-    repositories:
-      - songsterr/SongsterrRenderer
-    token: $$drone_token
-    when:
-      event: push
-      branch: master
-      success: true
-
 cache:
   mount:
     - docker_cache.tar
