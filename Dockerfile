@@ -1,4 +1,4 @@
-FROM anapsix/alpine-java:jdk8
+FROM anapsix/alpine-java:jdk7
 MAINTAINER Aleksey Potapkin <apotapkin@demax.ru>
 
 RUN apk add --no-cache curl
