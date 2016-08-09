@@ -17,7 +17,7 @@ COPY ./WOJenkins/ /WOJenkins
 COPY ./wonder/ /wonder
 
 ENV WO_VERSION 5.4.3
-ENV WONDER_BRANCH master
+ENV WONDER_BRANCH wonder_6
 
 COPY WOInstaller.jar /WOFrameworksRepository/WebObjects/
 # Ant tasks jar 
@@ -28,7 +28,7 @@ bash -x /WOJenkins/Build/Wonder/WorkspaceSetupScripts/Git/setupWonderWorkspace.s
 
 RUN ant frameworks frameworks.install \
 	-propertyfile /Root/build.properties \
-	-Dant.build.javac.target=1.7 \
+	-Dant.build.javac.target=1.5 \
 	-buildfile wonder/build.xml
 
 RUN apk del curl
